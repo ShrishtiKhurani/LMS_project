@@ -11,7 +11,7 @@ export const clerkWebhooks = async (req, res) => {
       "svix-id": req.headers["svix-id"],
       "svix-signature": req.headers["svix-signature"],
       "svix-timestamp": req.headers["svix-timestamp"],
-    });
+    }); 
 
     const { data, type } = req.body;
 
