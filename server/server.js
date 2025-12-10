@@ -5,21 +5,22 @@ import connectDB from './configs/mongoDb.js';
 import { clerkWebhooks } from './controllers/webhooks.js';
 import bodyParser from 'body-parser';
 
+
 //Initilize express
 const app=express()
 
 // connect to Db
-await connectDB()
+await connectDB();
 
 //Middleware
 app.use(cors())
+app.use(express.json());
 
 //Routes
 app.get('/',(req, res)=>res.send("API working..."))
-app.post('/clerk',
-    bodyParser.raw({ type: "application/json" }),
-    clerkWebhooks
-)
+app.post("/api/webhooks/clerk", bodyParser.raw({ type: "*/*" }), clerkWebhooks);
+
+
 //Port
 const PORT = process.env.PORT || 5000
 
