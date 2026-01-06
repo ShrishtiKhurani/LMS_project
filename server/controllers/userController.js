@@ -69,7 +69,7 @@ export const purchaseCourse = async (req, res) => {
     ];
 
     const session = await stripeInstance.checkout.sessions.create({
-      success_url: `${origin}/loading/my-enrollments`,
+      success_url: `${origin}/loading/my-enrollment`,
       cancel_url: `${origin}/`,
       line_items: line_items,
       mode: "payment",
@@ -83,5 +83,3 @@ export const purchaseCourse = async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 };
-
-// bahiiiii purchase me post me api fail ho rahe ha dekh and ek baar user schema bhi match kar dena field wagera and amout ka ha kuch tohhh
