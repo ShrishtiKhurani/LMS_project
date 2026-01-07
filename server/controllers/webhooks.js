@@ -62,71 +62,32 @@ export const stripeWebhooks = async (req, res) => {
 
   let event;
   try {
-    event = Stripe.webhooks.constructEvent(
+    event = stripeInstance.webhooks.constructEvent(
       req.body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
-  } catch (error) {
-  console.log("Stripe Signature Error:", error.message);
-  return res.status(400).send(`Webhook Error: ${error.message}`);
-}
+  } catch (err) {
+    console.log("Stripe Signature Error:", err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
 
-
-  // Handle the event
-  // switch (event.type){
-  //   case 'payment_intent.succeeded':{
-  //     const paymentIntent = event.data.object;
-  //     const paymentIntentId = paymentIntent.id;
-
-  //     const session = await stripeInstance.checkout.sessions.list({
-  //       payment_intent: paymentIntentId
-  //     })
-
-  //     const {purchaseId}= session.data[0].metadata;
-
-  //     const purchaseData = await Purchase.findById(purchaseId)
-  //     const userData = await User.findById(purchaseData.userId)
-  //     const courseData = await Course.findById(purchaseData.courseId.toString())
-
-  //     courseData.enrolledStudents.push(userData)
-  //     await courseData.save()
-
-  //     userData.enrolledStudents.push(courseData._id)
-  //     await userData.save()
-
-  //     purchaseData.status ='completed'
-  //     await purchaseData.save()
-
-  //     break;
-  //   }
-
-   console.log("STRIPE EVENT RECEIVED:", event.type);
-
+  console.log("STRIPE EVENT:", event.type);
 
   switch (event.type) {
-    case "checkout.session.completed": {
-      const session = event.data.object;
 
-      const { purchaseId } = session.metadata;
+    case "payment_intent.succeeded": {
+      const paymentIntent = event.data.object;
 
-      if (!purchaseId) {
-        console.log("No purchaseId found in metadata");
-        return res.status(400).json({ error: "Missing purchaseId" });
-      }
+      const purchaseId = paymentIntent.metadata.purchaseId;
+      if (!purchaseId) break;
 
       const purchaseData = await Purchase.findById(purchaseId);
-      if (!purchaseData) {
-        console.log("Purchase not found in DB");
-        break;
-      }
+      if (!purchaseData) break;
 
       const userData = await User.findById(purchaseData.userId);
-      const courseData = await Course.findById(
-        purchaseData.courseId.toString()
-      );
+      const courseData = await Course.findById(purchaseData.courseId);
 
-      // Update Course Students
       courseData.enrolledStudents.push(userData._id);
       await courseData.save();
 
@@ -136,38 +97,24 @@ export const stripeWebhooks = async (req, res) => {
       purchaseData.status = "completed";
       await purchaseData.save();
 
-      console.log("Database updated successfully!");
+      console.log("PURCHASE COMPLETED");
       break;
     }
 
-    case "checkout.session.expired":
     case "payment_intent.payment_failed": {
-      const session = event.data.object;
-      const { purchaseId } = session.metadata;
+      const paymentIntent = event.data.object;
+      const purchaseId = paymentIntent.metadata.purchaseId;
+
       if (purchaseId) {
-        await Purchase.findByIdAndUpdate(purchaseId, { status: "failed" });
+        await Purchase.findByIdAndUpdate(purchaseId, {
+          status: "failed",
+        });
       }
       break;
     }
 
-    // case 'payment_intent.payment_failed':{
-    //   const paymentIntent = event.data.object;
-    //   const paymentIntentId = paymentIntent.id;
-
-    //   const session = await stripeInstance.checkout.sessions.list({
-    //     payment_intent: paymentIntentId
-    //   })
-
-    //   const {purchaseId}= session.data[0].metadata;
-    //   const purchaseData = await Purchase.findById(purchaseId)
-    //   purchaseData.status ='failed'
-    //   await purchaseData.save()
-
-    //   break;
-
-    // }
     default:
-      console.log(`Unhandle event type ${event.type}`);
+      console.log("Unhandled event:", event.type);
   }
 
   res.json({ received: true });
