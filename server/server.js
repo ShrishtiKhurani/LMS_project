@@ -31,6 +31,7 @@ app.use("/api/educator", express.json(), educatorRouter);
 app.use("/api/course", express.json(), courseRouter);
 app.use("/api/user",express.json(),userRoute)
 
+
 //Port
 const PORT = process.env.PORT || 5000;
 
