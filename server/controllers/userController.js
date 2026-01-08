@@ -35,6 +35,7 @@ export const purchaseCourse = async (req, res) => {
     const { courseId } = req.body;
     const { origin } = req.headers;
     const { userId } = req.auth();
+    
     const userData = await User.findById(userId);
     const courseData = await Course.findById(courseId);
 
@@ -42,46 +43,56 @@ export const purchaseCourse = async (req, res) => {
       return res.json({ success: false, message: "Data not found" });
     }
 
-    const purchaseData = {
+    const amount =
+      courseData.coursePrice -
+      ((courseData.discount || 0) * courseData.coursePrice) / 100;
+
+    // Create DB record with pending status
+    const newPurchase = await Purchase.create({
       courseId: courseData._id,
       userId,
-      amount:
-        courseData.coursePrice -
-        ((courseData.discount || 0) * courseData.coursePrice) / 100,
-    };
+      amount,
+      status: "pending",           
+    });
 
-    const newPurchase = await Purchase.create(purchaseData);
-
-    // Stripe Gateway Initialize
+    // Stripe Setup
     const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
     const currency = process.env.CURRENCY.toLowerCase();
 
-    // Creating line items to for stripe
+    // Line items
     const line_items = [
       {
         price_data: {
           currency,
           product_data: { name: courseData.courseTitle },
-          unit_amount: Math.floor(newPurchase.amount * 100),
+          unit_amount: Math.floor(amount * 100),
         },
         quantity: 1,
       },
     ];
 
+    // Checkout Session
     const session = await stripeInstance.checkout.sessions.create({
-      success_url: `${origin}/loading/my-enrollment`,
-      cancel_url: `${origin}/`,
-      line_items: line_items,
+      payment_method_types: ["card"],
       mode: "payment",
+      line_items,
+      success_url: `${origin}/loading/my-enrollment?session_id={CHECKOUT_SESSION_ID}`, // important: pass session_id
+      cancel_url: `${origin}/`,
       payment_intent_data: {
         metadata: {
-          purchaseId: newPurchase._id.toString(),
+          purchaseId: newPurchase._id.toString(), 
         },
       },
     });
 
+    // Save Checkout Session ID to DB
+    newPurchase.checkoutSessionId = session.id;
+    await newPurchase.save();
+
     res.json({ success: true, session_url: session.url });
   } catch (error) {
-    res.json({ success: false, message: error.message });
+    console.log("PurchaseCourse Error:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
+
