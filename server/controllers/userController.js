@@ -73,56 +73,15 @@ export const purchaseCourse = async (req, res) => {
       cancel_url: `${origin}/`,
       line_items: line_items,
       mode: "payment",
-      metadata: {
-        purchaseId: newPurchase._id.toString(),
+      payment_intent_data: {
+        metadata: {
+          purchaseId: newPurchase._id.toString(),
+        },
       },
     });
 
     res.json({ success: true, session_url: session.url });
   } catch (error) {
     res.json({ success: false, message: error.message });
-  }
-};
-
-
-// Verify purchase (Webhook fallback)
-export const verifyPurchase = async (req, res) => {
-  try {
-    const { purchaseId } = req.query;
-
-    if (!purchaseId) {
-      return res.json({ success: false });
-    }
-
-    const purchase = await Purchase.findById(purchaseId);
-    if (!purchase) {
-      return res.json({ success: false });
-    }
-
-    // already completed
-    if (purchase.status === "completed") {
-      return res.json({ success: true });
-    }
-
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-    const sessions = await stripe.checkout.sessions.list({
-      limit: 1,
-      metadata: { purchaseId },
-    });
-
-    if (
-      sessions.data.length > 0 &&
-      sessions.data[0].payment_status === "paid"
-    ) {
-      purchase.status = "completed";
-      await purchase.save();
-
-      return res.json({ success: true });
-    }
-
-    return res.json({ success: false });
-  } catch (error) {
-    return res.json({ success: false });
   }
 };
