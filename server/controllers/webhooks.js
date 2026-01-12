@@ -120,8 +120,6 @@ export const stripeWebhooks = async (req, res) => {
       // Checkout Session Complete 
       case "checkout.session.completed": {
         const session = event.data.object;
-
-        // Find purchase by Checkout Session ID or Payment Intent ID
         const purchaseData = await Purchase.findOne({
           $or: [
             { checkoutSessionId: session.id },
