@@ -3,7 +3,7 @@ import { Purchase } from "../models/Purchase.js";
 import User from "../models/User.js";
 import Stripe from "stripe";
 import userRoute from "../routes/userRoute.js";
-import { CourseProgress, courseProgress } from "../models/CourseProgress.js";
+import { CourseProgress } from "../models/CourseProgress.js";
 
 // Get user data
 export const getUserData = async (req, res) => {
@@ -128,7 +128,6 @@ export const updatedCourseProgress = async (req, res) => {
 };
 
 // get user course progress
-
 export const getUserCourseProgress = async (req, res) => {
   try {
     const userId = req.auth.userId;
@@ -154,28 +153,32 @@ export const addUserRating = async (req, res) => {
     const course = await Course.findById(courseId);
 
     if (!course) {
-     return res.json({ success: false, message: "Course not found" });
+      return res.json({ success: false, message: "Course not found" });
     }
 
-    const user = await User.findById(userId)
+    const user = await User.findById(userId);
 
-    if(!user || !user.enrolledCourses.includes(courseId)){
-        return res.json({success:false, message: 'User has not purchased this course'})
+    if (!user || !user.enrolledCourses.includes(courseId)) {
+      return res.json({
+        success: false,
+        message: "User has not purchased this course",
+      });
     }
 
-    const existingRatingIndex = course.courseRatings.findIndex(r => r.userId ===userId)
+    const existingRatingIndex = course.courseRatings.findIndex(
+      (r) => r.userId === userId
+    );
 
-    if(existingRatingIndex > -1){
-      course.courseRatings[existingRatingIndex].rating = rating
-    } else{
-      course.courseRatings.push({userId, rating});
+    if (existingRatingIndex > -1) {
+      course.courseRatings[existingRatingIndex].rating = rating;
+    } else {
+      course.courseRatings.push({ userId, rating });
     }
 
     await course.save();
 
-    res.json({success: true, message: 'Rating added'})
-
+    res.json({ success: true, message: "Rating added" });
   } catch (error) {
-    res.json({success:false, message:error.message})
+    res.json({ success: false, message: error.message });
   }
 };
