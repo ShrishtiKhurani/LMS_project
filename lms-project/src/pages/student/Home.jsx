@@ -16,10 +16,8 @@ const Home = () => {
       <TestieMonialsSection/>
       <CallToAction/>
       <Footer/>
-      <CoursesDetails/>
-      
-      
-      
+      {/* <CoursesDetails/> */}
+
     </div>
   )
 }
