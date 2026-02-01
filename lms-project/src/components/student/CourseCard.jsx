@@ -8,7 +8,7 @@ const CourseCard = ({ course }) => {
 
   return (
     <Link
-      to={"/course/" + course._id}
+      to={course?._id ? "/course/" + course._id : "#"}
       onClick={() => window.scrollTo(0, 0)}
       className="block bg-white rounded-xl shadow-md hover:shadow-lg 
                  transition duration-300 overflow-hidden"
@@ -30,7 +30,7 @@ const CourseCard = ({ course }) => {
         </h3>
 
         {/* Educator */}
-        <p className="text-sm text-gray-500 mt-1">MindFule</p>
+        <p className="text-sm text-gray-500 mt-1">{course.educator.name}</p>
 
         {/* Ratings */}
         <div className="flex items-center gap-2 mt-3 text-left">

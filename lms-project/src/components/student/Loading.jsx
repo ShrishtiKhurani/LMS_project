@@ -1,6 +1,6 @@
 import React from "react";
-
 const Loading = () => {
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] bg-gradient-to-b from-blue-950 via-blue-900 to-blue-800 text-white">
       {/* Animated Spinner */}

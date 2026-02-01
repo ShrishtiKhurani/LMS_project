@@ -5,9 +5,12 @@ import Loading from "../../components/student/Loading";
 import { assets } from "../../assets/assets";
 import Footer from "../../components/student/Footer";
 import YouTube from "react-youtube";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const CoursesDetails = () => {
   const { id } = useParams();
+  console.log("COURSE ID FROM URL", id);
   const [courseData, setCourseData] = useState(null);
   const [openSection, setOpenSection] = useState({});
   const [isAlreadyEnrolled, setIsAlreadyEnrolled] = useState(false);
@@ -21,16 +24,62 @@ const CoursesDetails = () => {
     calculateChapterTime,
     calculateCourseDuration,
     humanizeDuration,
+    backendUrl,
+    userData,
+    getToken,
   } = useContext(AppContext);
 
   const fetchCourseData = async () => {
-    const findCourse = allCourses.find((course) => course._id === id);
-    setCourseData(findCourse);
+    try {
+      console.log("PARAM ID =", id);
+
+      const { data } = await axios.get(backendUrl + "/api/course/" + id);
+      if (data.success) {
+        setCourseData(data.courseData);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const enrolledCourse = async () => {
+    try {
+      if (!userData) {
+        return toast.warn("Login to Enroll");
+      }
+      if (isAlreadyEnrolled) {
+        return toast.warn("Already Enrolled");
+      }
+
+      const token = await getToken();
+      const { data } = await axios.post(
+        backendUrl + "/api/user/purchase",
+        { courseId: courseData._id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (data.success) {
+        const { session_url } = data;
+        window.location.replace(session_url);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
   };
 
   useEffect(() => {
+    if (!id) return;
     fetchCourseData();
-  }, [allCourses]);
+  }, [id]);
+
+  useEffect(() => {
+    if (userData && courseData) {
+      setIsAlreadyEnrolled(userData.enrolledCourses.includes(courseData._id));
+    }
+  }, [userData, courseData]);
 
   const toggleSection = (index) => {
     setOpenSection((prev) => ({
@@ -78,8 +127,10 @@ const CoursesDetails = () => {
                   ))}
                 </div>
                 <p className="text-xs text-gray-500">
-                  ({courseData.courseRatings.length}{" "}
-                  {courseData.courseRatings.length > 1 ? "ratings" : "rating"})
+                  {courseData.courseRatings?.length || 0}
+                  {(courseData.courseRatings?.length || 0) > 1
+                    ? "ratings"
+                    : "rating"}
                 </p>
               </div>
 
@@ -91,8 +142,8 @@ const CoursesDetails = () => {
                   className="w-4 h-4 opacity-70"
                 />
                 <p className="text-sm text-gray-700">
-                  {courseData.enrolledStudents.length}{" "}
-                  {courseData.enrolledStudents.length > 1
+                  {courseData.enrolledStudents?.length || 0}
+                  {(courseData.enrolledStudents?.length || 0) > 1
                     ? "students"
                     : "student"}
                 </p>
@@ -103,7 +154,7 @@ const CoursesDetails = () => {
             <p className="text-sm mt-5 text-gray-700">
               Course By:
               <span className="text-blue-600 font-medium underline cursor-pointer hover:text-blue-700">
-                MindFule
+                {courseData.educator.name}
               </span>
             </p>
             {/* Course structure */}
@@ -113,7 +164,7 @@ const CoursesDetails = () => {
               </h2>
 
               <div className="space-y-4">
-                {courseData.courseContent.map((chapter, index) => (
+                {courseData.courseContent?.map((chapter, index) => (
                   <div
                     key={index}
                     className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition duration-200"
@@ -138,10 +189,10 @@ const CoursesDetails = () => {
                       </div>
 
                       <p className="text-sm text-gray-700">
-                        {chapter.chapterContent.length}{" "}
-                        {chapter.chapterContent.length > 1
+                        {chapter.chapterContent?.length || 0}
+                        {(chapter.chapterContent?.length || 0) > 1
                           ? "lectures"
-                          : "lecture"}{" "}
+                          : "lecture"}
                         • {calculateChapterTime(chapter)}
                       </p>
                     </div>
@@ -152,7 +203,7 @@ const CoursesDetails = () => {
                       }`}
                     >
                       <ul className="divide-y divide-gray-200 border border-gray-100 rounded-xl overflow-hidden">
-                        {chapter.chapterContent.map((lecture, i) => (
+                        {chapter.chapterContent?.map((lecture, i) => (
                           <li
                             key={i}
                             className="flex items-center justify-between px-4 py-3 bg-white hover:bg-gradient-to-r hover:from-blue-100 hover:to-cyan-50 transition-all duration-200"
@@ -218,7 +269,7 @@ const CoursesDetails = () => {
                 dangerouslySetInnerHTML={{
                   __html: courseData.courseDescription,
                 }}
-              ></p> 
+              ></p>
             </div>
           </div>
 
@@ -335,10 +386,11 @@ const CoursesDetails = () => {
 
               {/* Enroll Button */}
               <button
+                onClick={enrolledCourse}
                 className="mt-3 w-full bg-gradient-to-r from-blue-600 to-blue-700 
-  hover:from-blue-700 hover:to-blue-800 text-white py-3 rounded-xl 
-  font-semibold text-sm tracking-wide shadow-md hover:shadow-lg 
-  transition-all duration-300"
+              hover:from-blue-700 hover:to-blue-800 text-white py-3 rounded-xl 
+              font-semibold text-sm tracking-wide shadow-md hover:shadow-lg 
+              transition-all duration-300"
               >
                 {isAlreadyEnrolled ? "Already Enrolled" : "Enroll Now 🚀"}
               </button>
