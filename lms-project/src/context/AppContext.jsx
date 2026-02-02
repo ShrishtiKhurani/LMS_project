@@ -40,19 +40,22 @@ export const AppContextProvider = (props) => {
   // Fetch Userdata
   const fetchUserData = async()=>{
 
-    if (user?.publicMetadata?.role === 'educator') {
-      setIsEducator(true)
-    }
+    // if (user?.publicMetadata?.role === 'educator') {
+    //   setIsEducator(true)
+    // }
     try {
       const token = await getToken();
-       console.log("token",token)
+       //console.log("token",token)
       const {data} = await axios.get(backendUrl +'/api/user/data', {headers:{
         Authorization: `Bearer ${token}`
       }})
 
-      if(data.success){
-        setUserData(data.user)
-      }
+      //console.log("User data", data)
+
+      if (data.success) {
+      setUserData(data.user);
+      setIsEducator(data.user.role === "educator");
+    }
       else{
         toast.error(data.message)
       }

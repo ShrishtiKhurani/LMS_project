@@ -14,22 +14,30 @@ const NavBar = () => {
   const { openSignIn } = useClerk();
   const { user } = useUser();
 
+  // Become Educator
   const becomeEducator = async () => {
     try {
+      if (!user) return toast.error("Please login first");
       if (isEducator) {
         navigate("/educator");
         return;
       }
 
+      // Confirm dialog before upgrading
+      const confirmEducator = window.confirm(
+        "Do you want to become an Educator? This will allow you to publish courses."
+      );
+      if (!confirmEducator) return;
+
       const token = await getToken();
       const { data } = await axios.get(
-        backendUrl + "/api/educator/update-role",
+        `${backendUrl}/api/educator/update-role`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       if (data.success) {
         setIsEducator(true);
         toast.success(data.message);
+        navigate("/educator");
       } else {
         toast.error(data.message);
       }
@@ -51,26 +59,21 @@ const NavBar = () => {
         className="w-28 lg:w-32 cursor-pointer"
       />
 
+      {/* large screen*/}
       <div className="hidden md:flex items-center gap-5 text-gray-500">
-        <div className="flex items-center gap-5">
-          {user && (
-            <>
+        {user ? (
+          <>
+            <div className="flex items-center gap-5">
               <button onClick={becomeEducator}>
                 {isEducator ? "Educator Dashboard" : "Become Educator"}
               </button>
-              |
-              <Link
-                to="/my-enrollment"
-                className="hover:text-gray-800 transition"
-              >
+              <span>|</span>
+              <Link to="/my-enrollment" className="hover:text-gray-800 transition">
                 My Enrollments
               </Link>
-            </>
-          )}
-        </div>
-
-        {user ? (
-          <UserButton />
+            </div>
+            <UserButton />
+          </>
         ) : (
           <button
             onClick={() => openSignIn()}
@@ -80,29 +83,24 @@ const NavBar = () => {
           </button>
         )}
       </div>
-      {/* for small screen */}
+
+      {/* Mobile Menu */}
       <div className="md:hidden flex items-center gap-2 sm:gap-5 text-gray-500">
-        <div className="flex items-center gap-1 sm:gap-2 max-sm:text-xs">
-          {user && (
-            <>
+        {user ? (
+          <>
+            <div className="flex flex-col gap-1 sm:gap-2 text-sm">
               <button onClick={becomeEducator}>
                 {isEducator ? "Educator Dashboard" : "Become Educator"}
               </button>
-              |
-              <Link
-                to="/my-enrollment"
-                className="hover:text-gray-800 transition"
-              >
+              <Link to="/my-enrollment" className="hover:text-gray-800 transition">
                 My Enrollments
               </Link>
-            </>
-          )}
-        </div>
-        {user ? (
-          <UserButton />
+            </div>
+            <UserButton />
+          </>
         ) : (
-          <button className="p-1 sm:p-2 rounded-full transition">
-            <img src={assets.user_icon} alt="" />
+          <button className="p-1 sm:p-2 rounded-full transition" onClick={() => openSignIn()}>
+            <img src={assets.user_icon} alt="user icon" />
           </button>
         )}
       </div>

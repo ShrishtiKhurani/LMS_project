@@ -1,20 +1,21 @@
 import express from "express";
 import {
-    addUserRating,
+  addUserRating,
   getUserCourseProgress,
   getUserData,
   purchaseCourse,
   updatedCourseProgress,
   userEnrolledCourse,
 } from "../controllers/userController.js";
+import { requireAuth } from "@clerk/express";
 
 const userRoute = express.Router();
 
-userRoute.get("/data", getUserData);
-userRoute.get("/enrolled-courses", userEnrolledCourse);
-userRoute.post("/purchase", purchaseCourse);
-userRoute.post("/update-course-progress", updatedCourseProgress);
-userRoute.post("/get-course-progress", getUserCourseProgress);
-userRoute.post("/add-rating", addUserRating);
+userRoute.get("/data", requireAuth(), getUserData);
+userRoute.get("/enrolled-courses", requireAuth(), userEnrolledCourse);
+userRoute.post("/purchase", requireAuth(), purchaseCourse);
+userRoute.post("/update-course-progress", requireAuth(), updatedCourseProgress);
+userRoute.post("/get-course-progress", requireAuth(), getUserCourseProgress);
+userRoute.post("/add-rating", requireAuth(), addUserRating);
 
 export default userRoute;

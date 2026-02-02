@@ -1,18 +1,20 @@
 import { clerkClient } from "@clerk/express";
 
 // middleware (Educator protect routes)
-export const protectEducator =async (req,res, next)=>{
+export const protectEducator = async (req, res, next) => {
   try {
-    const userId = req.auth.userId
+    const { userId } = req.auth();
     const response = await clerkClient.users.getUser(userId);
 
-    if(response.publicMetadata.role !== 'educator'){
-        res.json({success:false, message: 'Unauthorizes Access'})
+    if (response.publicMetadata.role !== "educator") {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized Access",
+      });
     }
-
-    next()
+    next();
 
   } catch (error) {
-    res.json({success: false, message: error.message})
+    res.json({ success: false, message: error.message });
   }
-}
+};

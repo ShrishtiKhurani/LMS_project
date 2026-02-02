@@ -10,9 +10,14 @@ const userSchema = mongoose.Schema(
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Course",
-      },
+      },                                                              
     ],
-  },
+    role: {
+  type: String,
+  enum: ["student", "educator"],
+  default: "student"
+}
+  },                                                                                    
   { timestamps: true }
 );
 

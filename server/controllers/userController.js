@@ -4,17 +4,19 @@ import User from "../models/User.js";
 import Stripe from "stripe";
 import userRoute from "../routes/userRoute.js";
 import { CourseProgress } from "../models/CourseProgress.js";
+import { clerkClient } from "@clerk/express";
 
 // Get user data
 export const getUserData = async (req, res) => {
   try {
-    const userId = req.auth.userId;
+    const { userId } = req.auth();
     const user = await User.findById(userId);
 
     if (!user) {
       return res.json({ success: false, message: "User Not Found" });
     }
     res.json({ success: true, user });
+    // console.log("User data ", user)
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
@@ -101,7 +103,7 @@ export const purchaseCourse = async (req, res) => {
 // Update user course progress
 export const updatedCourseProgress = async (req, res) => {
   try {
-    const userId = req.auth.userId;
+    const { userId } = req.auth();
     const { courseId, lectureId } = req.body;
 
     const progressData = await CourseProgress.findOne({ userId, courseId });
@@ -130,7 +132,7 @@ export const updatedCourseProgress = async (req, res) => {
 // get user course progress
 export const getUserCourseProgress = async (req, res) => {
   try {
-    const userId = req.auth.userId;
+    const { userId } = req.auth();
     const { courseId } = req.body;
 
     const progressData = await CourseProgress.findOne({ userId, courseId });
