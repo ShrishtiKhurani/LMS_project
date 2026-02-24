@@ -45,3 +45,10 @@ const App = () => {
 };
 
 export default App;
+
+
+
+
+// frontend.......PS C:\Users\Dell\OneDrive\Desktop\LMS Project\lms-project> npm run dev
+
+// backend.....PS C:\Users\Dell\OneDrive\Desktop\LMS Project\server> npm run server
